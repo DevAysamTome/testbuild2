@@ -65,6 +65,18 @@
     <string>We need access to your photo library to select photos.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>We need access to add photos to your library.</string>
-   
+   <key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleIdentifier</key>
+        <string></string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>app-1-572219831254-ios-df3992a4b37034d745ea77</string>
+        </array>
+    </dict>
+</array>
 </dict>
 </plist>
