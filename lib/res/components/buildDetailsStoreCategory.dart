@@ -1,11 +1,11 @@
-// category_cards.dart
+import 'package:flutter/material.dart';
 
 import 'package:flutter/material.dart';
 
 class CategoryCards extends StatelessWidget {
   final String title;
   final Future<List<Map<String, dynamic>>> futureData;
-  final Function onTap;
+  final Function(Map<String, dynamic>) onTap;
 
   const CategoryCards({
     required this.title,
@@ -25,6 +25,7 @@ class CategoryCards extends StatelessWidget {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
         List<Map<String, dynamic>> data = snapshot.data ?? [];
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -39,14 +40,18 @@ class CategoryCards extends StatelessWidget {
                 ),
               ),
             ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: data.map((item) {
+            // Wrap ListView inside a SizedBox to control height
+            SizedBox(
+              height: 320, // Adjust the height as needed
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: data.length,
+                itemBuilder: (context, index) {
+                  var item = data[index];
                   return GestureDetector(
                     onTap: () => onTap(item),
                     child: Container(
-                      width: 300,
+                      width: 320,
                       margin: EdgeInsets.symmetric(horizontal: 8.0),
                       child: Card(
                         elevation: 3,
@@ -75,8 +80,8 @@ class CategoryCards extends StatelessWidget {
                             ),
                             Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.start,
                                 children: [
                                   Text(
                                     item['name'] ?? '',
@@ -95,7 +100,6 @@ class CategoryCards extends StatelessWidget {
                                       ),
                                       SizedBox(width: 4),
                                       Text(
-                                        textDirection: TextDirection.ltr,
                                         "${item['openingTime']} - ${item['closingTime']}",
                                         style: TextStyle(
                                           fontSize: 18,
@@ -117,7 +121,7 @@ class CategoryCards extends StatelessWidget {
                                         child: Text(
                                           item['address'] ?? '',
                                           style: TextStyle(
-                                            fontSize: 18,
+                                            fontSize: 15,
                                             color: Colors.grey[600],
                                           ),
                                           maxLines: 2,
@@ -125,6 +129,18 @@ class CategoryCards extends StatelessWidget {
                                         ),
                                       ),
                                     ],
+                                  ),
+                                  SizedBox(height: 5),
+                                  Text(
+                                    'الحالة : ${item['status']}',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: item['status'] == 'مفتوح'
+                                          ? Colors.green
+                                          : Colors.red,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -134,7 +150,7 @@ class CategoryCards extends StatelessWidget {
                       ),
                     ),
                   );
-                }).toList(),
+                },
               ),
             ),
           ],

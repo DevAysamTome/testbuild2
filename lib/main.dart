@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:user_app/models/cardProvider.dart';
 import 'package:user_app/models/cartProvider.dart';
@@ -7,7 +8,16 @@ import 'package:flutter/material.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+        options: const FirebaseOptions(
+            apiKey: "AIzaSyBIY3TUh1CMt72v-LbLYY7RACHISkY_MlA",
+            appId: "1:572219831254:web:eb578252ef66715545ea77",
+            messagingSenderId: "572219831254",
+            projectId: "sarie-46b77"));
+  } else {
+    await Firebase.initializeApp();
+  }
   runApp(const MyApp());
 }
 

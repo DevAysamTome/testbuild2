@@ -159,31 +159,36 @@ class _BeverageStoreDetailsScreenState
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                ChoiceChip(
-                  label: const Text('كل الوجبات'),
-                  selected: selectedCategory == '',
-                  onSelected: (selected) {
-                    filterMeals('');
-                  },
-                  selectedColor: Colors.redAccent,
-                ),
-                ...List<String>.from(widget.beverageStore['categories'] ?? [])
-                    .map((category) {
-                  return ChoiceChip(
-                    label: Text(category),
-                    selected: selectedCategory == category,
-                    onSelected: (selected) {
-                      filterMeals(category);
-                    },
-                    selectedColor: Colors.redAccent,
-                  );
-                }).toList(),
-              ],
-            ),
+      SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          ChoiceChip(
+            label: const Text('كل الوجبات'),
+            selected: selectedCategory == '',
+            onSelected: (selected) {
+              filterMeals('');
+            },
+            selectedColor: Colors.redAccent,
+          ),
+          SizedBox(width: 8), // المسافة بين العناصر
+          ...List<String>.from(widget.beverageStore['categories'] ?? [])
+              .map((category) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: ChoiceChip(
+                label: Text(category),
+                selected: selectedCategory == category,
+                onSelected: (selected) {
+                  filterMeals(category);
+                },
+                selectedColor: Colors.redAccent,
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    ),
 
             // Items Header
             const Text(

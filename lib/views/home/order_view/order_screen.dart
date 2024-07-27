@@ -27,12 +27,15 @@ class _OrdersScreenState extends State<OrdersScreen>
         appBar: AppBar(
           title: Text(
             'طلباتي',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           ),
+          backgroundColor: Colors.redAccent,
           centerTitle: true,
+          automaticallyImplyLeading: false,
           bottom: TabBar(
             controller: _tabController,
             indicatorColor: Colors.redAccent,
+            labelColor: Colors.white,
             tabs: [
               Tab(text: 'الطلبات الجارية'),
               Tab(text: 'تاريخ الطلبات'),

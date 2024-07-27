@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:user_app/models/cartItem.dart';
@@ -18,12 +20,63 @@ class MealDetailsScreen extends StatefulWidget {
 class _MealDetailsScreenState extends State<MealDetailsScreen> {
   List<String> selectedAddOns = [];
   int quantity = 1;
+  double _totalPrice = 0.0;
+  LatLng? userLocation;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateTotalPrice();
+    _getUserLocation();
+  }
+
+  Future<void> _getUserLocation() async {
+    final userId = FirebaseAuth
+        .instance.currentUser!.uid; // قم بتغيير هذا إلى ID المستخدم الفعلي
+    final addressDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('addresses')
+        .doc();
+
+    final addressSnapshot = await addressDoc.get();
+
+    if (addressSnapshot.exists) {
+      setState(() {
+        userLocation = LatLng(
+          addressSnapshot['location'][0],
+          addressSnapshot['location'][1],
+        );
+      });
+    }
+  }
+
+  void _calculateTotalPrice() {
+    double basePrice = widget.meal.price;
+    double addOnsPrice = 0.0;
+
+    for (var addOn in widget.meal.addOns) {
+      if (addOn is Map<String, dynamic> &&
+          selectedAddOns.contains(addOn['name'])) {
+        addOnsPrice += (addOn['price'] as num).toDouble();
+      }
+    }
+
+    setState(() {
+      _totalPrice = (basePrice + addOnsPrice) * quantity;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    List<Map<String, dynamic>> addOnItems =
+        List<Map<String, dynamic>>.from(widget.meal.addOns);
+    List<String> addOnStrings =
+        addOnItems.map((addOn) => addOn['name'] as String).toList();
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.redAccent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -31,63 +84,9 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
         ),
         title: const Text(
           'التفاصيل',
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.white),
         ),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.shopping_cart),
-            onPressed: () {
-              // Navigate to the cart screen or display a dialog showing cart items.
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('العناصر في السلة'),
-                    content: Consumer<CartProvider>(
-                      builder: (context, cartProvider, _) {
-                        return ListView.builder(
-                          itemCount: cartProvider.cartItemCount,
-                          itemBuilder: (BuildContext context, int index) {
-                            final cartItem = cartProvider.orders
-                                .expand((order) => order.items)
-                                .firstWhere(
-                                    (item) => item.meal.id == widget.meal.id,
-                                    orElse: () => CartItem(
-                                          meal: widget.meal,
-                                          quantity: 0,
-                                          selectedAddOns: [],
-                                          placeName: '',
-                                          userLocation: LatLng(0, 0), // Use actual location
-                                          restaurantLocation: LatLng(
-                                              widget.restaurant['restaurant_location']
-                                                      ['latitude'],
-                                              widget.restaurant['restaurant_location']
-                                                      ['longitude']),
-                                          storeId: widget.restaurant['storeId'],
-                                        ));
-                            
-                            return ListTile(
-                              title: Text(cartItem.meal.name),
-                              subtitle: Text('المطعم: ${widget.restaurant['name']}'),
-                              trailing: IconButton(
-                                icon: Icon(Icons.delete),
-                                onPressed: () {
-                                  cartProvider.removeItem(
-                                      cartItem.storeId, index);
-                                  Navigator.pop(context); // Close dialog after deleting item
-                                },
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
+        centerTitle: true,
       ),
       body: Directionality(
         textDirection: TextDirection.rtl,
@@ -177,25 +176,6 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Size options
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Chip(
-                    label: const Text('10"'),
-                    backgroundColor: Colors.grey[200],
-                  ),
-                  Chip(
-                    label: const Text('14"'),
-                    backgroundColor: Colors.orange[100],
-                  ),
-                  Chip(
-                    label: const Text('16"'),
-                    backgroundColor: Colors.grey[200],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
               // Ingredients
               const Text(
                 'المكونات',
@@ -205,120 +185,177 @@ class _MealDetailsScreenState extends State<MealDetailsScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8.0,
-                children: widget.meal.ingredients.map((ingredient) {
-                  return ChoiceChip(
-                    label: Text(ingredient),
-                    selected: false,
-                  );
-                }).toList(),
+              SizedBox(
+                height: 50, // Adjust the height as needed
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: widget.meal.ingredients.map((ingredient) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: ChoiceChip(
+                        label: Text(ingredient),
+                        selected: false,
+                        onSelected: (selected) {
+                          // Handle chip selection if needed
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
               const SizedBox(height: 16),
               // Add-ons
-              const Text(
-                'الإضافات',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8.0,
-                children: widget.meal.addOns.map((addOn) {
-                  return ChoiceChip(
-                    label: Text(addOn),
-                    selected: selectedAddOns.contains(addOn),
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          selectedAddOns.add(addOn);
-                        } else {
-                          selectedAddOns.remove(addOn);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
+              // const Text(
+              //   'الإضافات',
+              //   style: TextStyle(
+              //     fontSize: 16,
+              //     fontWeight: FontWeight.bold,
+              //   ),
+              // ),
+              // const SizedBox(height: 8),
+              // Column(
+              //   children: addOnStrings.map((addOn) {
+              //     final isSelected = selectedAddOns.contains(addOn);
+
+              //     return ListTile(
+              //       title: Text(addOn),
+              //       trailing: Checkbox(
+              //         value: isSelected,
+              //         onChanged: (bool? value) {
+              //           setState(() {
+              //             if (value == true) {
+              //               selectedAddOns.add(addOn);
+              //             } else {
+              //               selectedAddOns.remove(addOn);
+              //             }
+              //             _calculateTotalPrice();
+              //           });
+              //         },
+              //       ),
+              //     );
+              //   }).toList(),
+              // ),
               const SizedBox(height: 16),
-              // Price and Quantity
+              // Quantity and Total Price
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${widget.meal.price} ₪',
+                    'الكمية',
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Row(
                     children: [
                       IconButton(
+                        icon: const Icon(
+                          Icons.remove,
+                        ),
+                        splashRadius: 4,
+                        color: Colors.white,
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStatePropertyAll<Color>(Colors.redAccent),
+                        ),
                         onPressed: () {
-                          setState(() {
-                            if (quantity > 1) {
+                          if (quantity > 1) {
+                            setState(() {
                               quantity--;
-                            }
-                          });
+                              _calculateTotalPrice();
+                            });
+                          }
                         },
-                        icon: const Icon(Icons.remove),
+                      ),
+                      SizedBox(
+                        width: 10,
                       ),
                       Text(
                         '$quantity',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      SizedBox(
+                        width: 10,
                       ),
                       IconButton(
+                        icon: const Icon(Icons.add),
+                        splashRadius: 4,
+                        color: Colors.white,
+                        style: ButtonStyle(
+                          backgroundColor:
+                              MaterialStatePropertyAll<Color>(Colors.redAccent),
+                        ),
                         onPressed: () {
                           setState(() {
                             quantity++;
+                            _calculateTotalPrice();
                           });
                         },
-                        icon: const Icon(Icons.add),
                       ),
                     ],
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              Text(
+                'السعر الإجمالي: ${_totalPrice.toStringAsFixed(2)} ₪',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  decorationStyle: TextDecorationStyle.solid,
+                ),
+              ),
               const SizedBox(height: 16),
               // Add to Cart Button
               Center(
                 child: ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStatePropertyAll<Color>(Colors.redAccent),
+                    visualDensity: VisualDensity.standard,
+                    padding: MaterialStateProperty.all<EdgeInsets>(
+                        EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 42)), // زيادة الحجم
+                  ),
                   onPressed: () {
                     final cartProvider =
                         Provider.of<CartProvider>(context, listen: false);
                     cartProvider.addItem(
                       CartItem(
-                          meal: widget.meal,
-                          quantity: quantity,
-                          selectedAddOns: selectedAddOns,
-                          placeName: '',
-                          userLocation: LatLng(0, 0), // Use actual location
-                          restaurantLocation: LatLng(
-                              widget.restaurant['restaurant_location']['latitude'],
-                              widget.restaurant['restaurant_location']['longitude']),
-                          storeId: widget.restaurant['storeId']),
+                        meal: widget.meal,
+                        quantity: quantity,
+                        selectedAddOns: selectedAddOns,
+                        placeName: '',
+                        userLocation: userLocation ?? LatLng(0, 0),
+                        restaurantLocation: LatLng(
+                            widget.restaurant['location']['latitude'],
+                            widget.restaurant['location']['longitude']),
+                        storeId: widget.restaurant['storeId'],
+                      ),
                     );
 
                     // Reset selected addons and quantity after adding to cart
                     setState(() {
                       selectedAddOns = [];
                       quantity = 1;
+                      _calculateTotalPrice();
                     });
                     // Show snackbar
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('تمت الإضافة إلى السلة'),
+                        content: Text(
+                          'تمت الإضافة إلى السلة',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         duration: Duration(seconds: 2),
                       ),
                     );
                   },
-                  child: const Text('إضافة إلى السلة'),
+                  child: const Text(
+                    'إضافة إلى السلة',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
                 ),
               ),
             ],

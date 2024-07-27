@@ -1,14 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class EditProfileScreen extends StatelessWidget {
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Vishal Khadok');
-  final TextEditingController _emailController =
-      TextEditingController(text: 'hello@halallab.co');
-  final TextEditingController _phoneController =
-      TextEditingController(text: '408-841-0926');
-  final TextEditingController _bioController =
-      TextEditingController(text: 'I love fast food');
+class EditProfileScreen extends StatefulWidget {
+  final String userId; // إضافة معرف المستخدم
+
+  EditProfileScreen({required this.userId});
+
+  @override
+  _EditProfileScreenState createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _bioController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      DocumentSnapshot userDoc =
+          await firestore.collection('users').doc(widget.userId).get();
+
+      if (userDoc.exists) {
+        var data = userDoc.data() as Map<String, dynamic>;
+        _nameController.text = data['fullName'] ?? '';
+        _emailController.text = data['email'] ?? '';
+        _phoneController.text = data['phoneNumber'] ?? '';
+        _bioController.text = data['bio'] ?? '';
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
+  }
+
+  Future<void> _updateUserProfile() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      await firestore.collection('users').doc(widget.userId).update({
+        'fullName': _nameController.text,
+        'email': _emailController.text,
+        'phoneNumber': _phoneController.text,
+        'bio': _bioController.text,
+      });
+      print('User profile updated successfully');
+    } catch (e) {
+      print('Error updating profile: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +160,7 @@ class EditProfileScreen extends StatelessWidget {
               Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    // ضع هنا منطق حفظ المعلومات المعدلة
+                    _updateUserProfile();
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(

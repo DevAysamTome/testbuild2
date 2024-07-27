@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
       verificationCompleted: (PhoneAuthCredential credential) async {
         UserCredential userCredential =
             await _auth.signInWithCredential(credential);
-        handleUser(userCredential.user);
+        await handleUser(userCredential.user);
       },
       verificationFailed: (FirebaseAuthException e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -40,10 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
       codeAutoRetrievalTimeout: (String verificationId) {},
+      timeout: Duration(seconds: 60), // إضافة فترة زمنية للانتظار
     );
   }
 
-  void handleUser(User? user) async {
+  Future<void> handleUser(User? user) async {
     if (user != null) {
       FirebaseFirestore _firestore = FirebaseFirestore.instance;
       DocumentSnapshot userDoc =
@@ -54,12 +55,18 @@ class _LoginScreenState extends State<LoginScreen> {
           'phoneNumber': user.phoneNumber,
           'role': 'user', // تعيين دور افتراضي
         });
-      }
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => HomeComponent()),
-      );
+        // الانتقال مباشرة إلى الشاشة الرئيسية
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomeComponent()),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => HomeComponent()),
+        );
+      }
     }
   }
 
@@ -73,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     UserCredential userCredential =
         await _auth.signInWithCredential(credential);
-    handleUser(userCredential.user);
+    await handleUser(userCredential.user);
   }
 
   @override
@@ -233,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
+                                backgroundColor: Colors.redAccent,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10.0),
                                 ),
@@ -241,7 +248,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     const EdgeInsets.symmetric(vertical: 16.0),
                               ),
                               child: const Text('تسجيل الدخول',
-                                  style: TextStyle(fontSize: 16)),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.white)),
                             ),
                           ),
                           const SizedBox(height: 16),

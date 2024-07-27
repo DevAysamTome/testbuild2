@@ -94,15 +94,7 @@ class _SearchWidgetState extends State<SearchWidget> {
           ),
         ),
       );
-    } else if (collection == 'pharmacies') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PharmasyDetailsScreen(
-            pharmacy: item,
-          ),
-        ),
-      );
+    
     } else if (collection == 'beverageStores') {
       Navigator.push(
         context,

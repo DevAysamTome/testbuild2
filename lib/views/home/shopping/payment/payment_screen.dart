@@ -265,9 +265,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         'timestamp': FieldValue.serverTimestamp(),
         'items': cartItems.map((item) {
           return {
-            'mealName': item.meal.name,
-            'imageUrl': item.meal.imageUrl,
-            'mealPrice': item.meal.price,
+            'mealName': item.meal!.name,
+            'imageUrl': item.meal!.imageUrl,
+            'mealPrice': item.meal!.price,
             'quantity': item.quantity,
           };
         }).toList(),

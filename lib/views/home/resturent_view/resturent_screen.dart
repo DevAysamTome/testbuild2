@@ -64,8 +64,13 @@ class _RestaurantsScreenState extends State<RestaurantsScreen> {
         textDirection: TextDirection.rtl,
         child: Scaffold(
           appBar: AppBar(
-            title: Text('المطاعم'),
+            backgroundColor: Colors.redAccent,
+            title: Text(
+              'المطاعم',
+              style: TextStyle(color: Colors.white),
+            ),
             centerTitle: true,
+            automaticallyImplyLeading: false,
           ),
           body: Column(
             children: [

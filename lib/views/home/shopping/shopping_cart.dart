@@ -19,6 +19,18 @@ class _CartScreenState extends State<CartScreen> {
   LatLng? _selectedLocation;
   LatLng? resturantLocation;
   LatLng? bevargeLocation;
+
+  @override
+  void initState() {
+    super.initState();
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final storeIds = cartProvider.orders.map((order) => order.storeId).toSet();
+    for (var storeId in storeIds) {
+      cartProvider
+          .fetchStoreName(storeId); // Fetch store names for all storeIds
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var cartProvider = Provider.of<CartProvider>(context);
@@ -44,127 +56,132 @@ class _CartScreenState extends State<CartScreen> {
               itemCount: cartProvider.orders.length,
               itemBuilder: (context, orderIndex) {
                 var order = cartProvider.orders[orderIndex];
+                final storeName = cartProvider.getStoreName(order.storeId);
 
-                return Card(
-                  color: const Color(
-                      0xFF1f1f2f), // Updated color for better contrast
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 8.0, horizontal: 16.0),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        title: Text(
-                          'متجر: ${order.storeId}', // Displaying store ID or store name
-                          style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Card(
+                    color: const Color(0xFF1f1f2f),
+                    elevation: 2,
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 16.0),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          title: Text(
+                            'متجر: $storeName', // Displaying store name
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            'عدد العناصر: ${order.items.length}',
+                            style: const TextStyle(color: Colors.white70),
+                          ),
                         ),
-                        subtitle: Text(
-                          'عدد العناصر: ${order.items.length}',
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                      Column(
-                        children: order.items.map((item) {
-                          return Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8.0),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF2a2a39),
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  child: Image.network(
-                                    item.meal.imageUrl,
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
+                        Column(
+                          children: order.items.map((item) {
+                            return Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8.0),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2a2a39),
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    child: Image.network(
+                                      item.meal.imageUrl,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.meal.name,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.meal!.name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '\$${item.meal.price}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'الإضافات: ${item.selectedAddOns?.join(', ')}', // Display selected add-ons
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle,
+                                          color: Colors.redAccent),
+                                      onPressed: () {
+                                        cartProvider.updateQuantity(
+                                          order.storeId,
+                                          order.items.indexOf(item),
+                                          item.quantity > 1
+                                              ? item.quantity - 1
+                                              : 1,
+                                        );
+                                      },
                                     ),
-                                    const SizedBox(height: 4),
                                     Text(
-                                      '\$${item.meal.price}',
+                                      '${item.quantity}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'الإضافات: ${item.selectedAddOns!.join(', ')}', // Display selected add-ons
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add_circle,
+                                          color: Colors.redAccent),
+                                      onPressed: () {
+                                        cartProvider.updateQuantity(
+                                          order.storeId,
+                                          order.items.indexOf(item),
+                                          item.quantity + 1,
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
-                              ),
-                              Column(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.remove_circle,
-                                        color: Colors.orange),
-                                    onPressed: () {
-                                      cartProvider.updateQuantity(
-                                        order.storeId,
-                                        order.items.indexOf(item),
-                                        item.quantity > 1
-                                            ? item.quantity - 1
-                                            : 1,
-                                      );
-                                    },
-                                  ),
-                                  Text(
-                                    '${item.quantity}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.add_circle,
-                                        color: Colors.orange),
-                                    onPressed: () {
-                                      cartProvider.updateQuantity(
-                                        order.storeId,
-                                        order.items.indexOf(item),
-                                        item.quantity + 1,
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                              IconButton(
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  cartProvider.removeItem(
-                                      order.storeId, order.items.indexOf(item));
-                                },
-                              ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ],
+                                IconButton(
+                                  icon: const Icon(Icons.delete,
+                                      color: Colors.redAccent),
+                                  onPressed: () {
+                                    cartProvider.removeItem(order.storeId,
+                                        order.items.indexOf(item));
+                                  },
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -201,6 +218,7 @@ class _CartScreenState extends State<CartScreen> {
                         _selectedAddress = selectedAddress;
                         _selectedLocation = selectedLocation;
                       });
+                      print(selectedLocation);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -230,7 +248,6 @@ class _CartScreenState extends State<CartScreen> {
                     onPressed: () async {
                       if (_selectedAddress != null &&
                           _selectedLocation != null) {
-                        // Create a copy of the orders list to avoid modification during iteration
                         final ordersToPlace =
                             List<Order>.from(cartProvider.orders);
 
@@ -262,7 +279,7 @@ class _CartScreenState extends State<CartScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: Colors.redAccent,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),

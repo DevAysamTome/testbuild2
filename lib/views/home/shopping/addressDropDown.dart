@@ -42,8 +42,8 @@ class _AddressDropdownState extends State<AddressDropdown> {
           return {
             'address': data['address'] ?? '',
             'location': LatLng(
-              double.parse(data['lat']),
-              double.parse(data['lng']),
+              data['location']['lat'] ?? 0.0,
+              data['location']['lng'] ?? 0.0,
             ),
           };
         }).toList();

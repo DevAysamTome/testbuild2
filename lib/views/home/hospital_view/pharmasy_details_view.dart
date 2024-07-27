@@ -1,7 +1,13 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:user_app/models/cartItem.dart';
+import 'package:user_app/models/cartProvider.dart';
+import 'package:user_app/models/meal.dart';
 
 class PharmasyDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> pharmacy;
@@ -15,12 +21,10 @@ class PharmasyDetailsScreen extends StatefulWidget {
 class _PharmasyDetailsScreenState extends State<PharmasyDetailsScreen> {
   TextEditingController _medicineNameController = TextEditingController();
   bool _uploadPrescription = false;
-  File? _prescriptionImage; // Variable to store uploaded image
+  File? _prescriptionImage;
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void dispose() {
@@ -39,6 +43,60 @@ class _PharmasyDetailsScreenState extends State<PharmasyDetailsScreen> {
         print('No image selected.');
       }
     });
+  }
+
+  Future<String?> _uploadPrescriptionImage() async {
+    if (_prescriptionImage == null) return null;
+
+    try {
+      String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      Reference ref = _storage.ref().child('prescriptions/$fileName');
+      UploadTask uploadTask = ref.putFile(_prescriptionImage!);
+      TaskSnapshot taskSnapshot = await uploadTask;
+      String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  void _addToCart() async {
+    String medicineName = _medicineNameController.text.trim();
+    String? prescriptionImageUrl = await _uploadPrescriptionImage();
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
+    // استخدام Meal مع معلومات الدواء
+    cartProvider.addItem(CartItem(
+      meal: Meal(
+        id: widget.pharmacy['storeId'] ??
+            'unknown', // استخدام storeId كمعرف للدواء
+        name: medicineName, // اسم الدواء
+        description: widget.pharmacy['description'] ??
+            'لا يوجد وصف', // وصف الصيدلية كبديل
+        price: 0, // السعر الافتراضي للدواء إذا كان غير محدد
+        imageUrl:
+            widget.pharmacy['imageUrl'], // صورة فارغة أو صورة افتراضية للدواء
+        ingredients: [], // لا يوجد مكونات هنا
+        addOns: [], // لا يوجد إضافات هنا
+        category: 'صيدلية', // تصنيف ثابت للصيدلية
+      ),
+      quantity: 1,
+      placeName: widget.pharmacy['name'] ?? 'اسم غير متوفر',
+      userLocation: LatLng(0, 0), // موقع المستخدم، استخدم الموقع الفعلي إن أمكن
+      restaurantLocation: LatLng(
+        widget.pharmacy['pharmcies_location']['latitude'],
+        widget.pharmacy['pharmcies_location']['longitude'],
+      ),
+      storeId: widget.pharmacy['storeId'],
+      prescriptionImageUrl: prescriptionImageUrl, // إضافة صورة الروشتة إن وجدت
+    ));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('تم إضافة الطلب إلى السلة')),
+    );
+
+    // الانتقال إلى شاشة السلة أو أي شاشة أخرى إذا لزم الأمر
   }
 
   @override
@@ -145,9 +203,9 @@ class _PharmasyDetailsScreenState extends State<PharmasyDetailsScreen> {
                     setState(() {
                       _uploadPrescription = value!;
                       if (_uploadPrescription) {
-                        _getImageFromGallery(); // Activate image picker
+                        _getImageFromGallery();
                       } else {
-                        _prescriptionImage = null; // Clear image if unchecked
+                        _prescriptionImage = null;
                       }
                     });
                   },
@@ -171,14 +229,9 @@ class _PharmasyDetailsScreenState extends State<PharmasyDetailsScreen> {
               ),
             SizedBox(height: 16),
 
-            // Button to Place Order
+            // Button to Add to Cart
             ElevatedButton(
-              onPressed: () {
-                // Implement order placement logic here
-                _medicineNameController.text.trim();
-                // Use medicineName and _prescriptionImage as needed
-                // Example: Navigator.push to a confirmation screen or handle the order directly
-              },
+              onPressed: _addToCart,
               style: ElevatedButton.styleFrom(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 80, vertical: 16),
@@ -188,7 +241,7 @@ class _PharmasyDetailsScreenState extends State<PharmasyDetailsScreen> {
                 ),
               ),
               child: const Text(
-                'اطلب',
+                'أضف إلى السلة',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

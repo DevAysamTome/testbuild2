@@ -5,10 +5,11 @@ class CartItem {
   final String storeId;
   final Meal meal;
   int quantity;
-  List<String>? selectedAddOns;  // تأكد من إضافة هذا المعامل
+  List<dynamic>? selectedAddOns;  // تأكد من إضافة هذا المعامل
   String? placeName;
   LatLng? userLocation;
   LatLng? restaurantLocation;
+  final String? prescriptionImageUrl; // إضافة هذا الحقل
 
   CartItem({
     required this.storeId,
@@ -18,6 +19,8 @@ class CartItem {
     this.placeName,
     this.userLocation,
     this.restaurantLocation,
+        this.prescriptionImageUrl,
+
   });
 
   Map<String, dynamic> toMap() {

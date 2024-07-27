@@ -1,47 +1,35 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:user_app/controller/orderController.dart';
 import 'package:user_app/models/meal.dart';
-import 'package:user_app/views/home/resturent_view/meal_detial_view.dart';
+import 'package:user_app/views/home/sweet_view/sweet_item_view.dart';
 
-class RestaurantDetailsScreen extends StatefulWidget {
-  final Map<String, dynamic> restaurant;
+class SweetDetailsScreen extends StatefulWidget {
+  final Map<String, dynamic> sweetStore;
 
-  RestaurantDetailsScreen({required this.restaurant});
+  const SweetDetailsScreen({super.key, required this.sweetStore});
 
   @override
-  _RestaurantDetailsScreenState createState() =>
-      _RestaurantDetailsScreenState();
+  _SweetDetailsScreenState createState() =>
+      _SweetDetailsScreenState();
 }
 
-class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
-  List<Meal> meals = [];
+class _SweetDetailsScreenState
+    extends State<SweetDetailsScreen> {
+  List<Meal> items = [];
   String selectedCategory = '';
-  double parsePrice(dynamic price) {
-    if (price is int) {
-      return price.toDouble();
-    } else if (price is String) {
-      return double.parse(price);
-    } else {
-      throw TypeError();
-    }
-  }
 
   @override
   void initState() {
     super.initState();
-    meals = List<Map<String, dynamic>>.from(widget.restaurant['meals'] ?? [])
-        .map((mealData) => Meal(
-            id: mealData['id'],
-            name: mealData['mealName'],
-            description: mealData['description'],
-            price: parsePrice(mealData['price']),
-            imageUrl: mealData['imageUrl'] ?? '',
-            ingredients: mealData['ingredients'] ?? '',
-            addOns: mealData['addOns'],
-            category: mealData['category']))
+    items = List<Map<String, dynamic>>.from(widget.sweetStore['meals'] ?? [])
+        .map((itemData) => Meal(
+            id: itemData['id'],
+            name: itemData['itemName'],
+            description: itemData['description'],
+            price: itemData['price'],
+            imageUrl: itemData['imageUrl'] ?? '',
+            ingredients: itemData['ingredients'],
+            addOns: itemData['addOns'],
+            category: itemData['category']))
         .toList();
     selectedCategory = '';
   }
@@ -50,26 +38,26 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     setState(() {
       selectedCategory = category;
       if (category == '') {
-        meals =
-            List<Map<String, dynamic>>.from(widget.restaurant['meals'] ?? [])
+        items =
+            List<Map<String, dynamic>>.from(widget.sweetStore['meals'] ?? [])
                 .map((mealData) => Meal(
                     id: mealData['id'],
-                    name: mealData['mealName'],
+                    name: mealData['itemName'],
                     description: mealData['description'],
-                    price: parsePrice(mealData['price']),
+                    price: mealData['price'],
                     imageUrl: mealData['imageUrl'] ?? '',
                     ingredients: mealData['ingredients'],
                     addOns: mealData['addOns'],
                     category: mealData['category']))
                 .toList();
       } else {
-        meals =
-            List<Map<String, dynamic>>.from(widget.restaurant['meals'] ?? [])
+        items =
+            List<Map<String, dynamic>>.from(widget.sweetStore['meals'] ?? [])
                 .map((mealData) => Meal(
                     id: mealData['id'],
-                    name: mealData['mealName'],
+                    name: mealData['itemName'],
                     description: mealData['description'],
-                    price: parsePrice(mealData['price']),
+                    price: mealData['price'],
                     imageUrl: mealData['imageUrl'] ?? '',
                     ingredients: mealData['ingredients'],
                     addOns: mealData['addOns'],
@@ -86,67 +74,47 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            widget.restaurant['name'] ?? 'اسم غير متوفر',
-            style: TextStyle(color: Colors.white),
-          ),
-          centerTitle: true,
-          backgroundColor: Colors.redAccent,
+          title: Text(widget.sweetStore['name'] ?? 'تفاصيل محل المشروبات'),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
               Navigator.pop(context);
             },
           ),
         ),
         body: ListView(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           children: [
-            // Restaurant Image
+            // Beverage Store Image
             Container(
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(widget.restaurant['imageUrl'] ?? ''),
+                  image: NetworkImage(widget.sweetStore['imageUrl'] ?? ''),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-            // Restaurant Name and Rating
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    widget.restaurant['name'] ?? 'اسم غير متوفر',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    widget.restaurant['address'] ?? '',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  SizedBox(height: 16),
-                ],
+            // Beverage Store Name
+            Text(
+              widget.sweetStore['name'] ?? 'اسم غير متوفر',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
               ),
             ),
-
-            // Delivery Info
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 8),
+            const Row(
               children: [
                 Row(
                   children: [
                     Icon(Icons.star, color: Colors.amber, size: 24),
                     SizedBox(width: 4),
                     Text(
-                      '${widget.restaurant['rating'] ?? 0}',
+                      '0',
                       style: TextStyle(fontSize: 16),
                     ),
                   ],
@@ -175,76 +143,76 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
-
-            // Categories
+            const SizedBox(height: 8),
+            // Beverage Store Address
             Text(
+              widget.sweetStore['address'] ?? 'عنوان غير متوفر',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+
+            const Text(
               'التصنيفات:',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
-            SizedBox(height: 8),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  ChoiceChip(
-                    label: const Text('كل الوجبات'),
-                    selected: selectedCategory == '',
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                ChoiceChip(
+                  label: const Text('كل الوجبات'),
+                  selected: selectedCategory == '',
+                  onSelected: (selected) {
+                    filterMeals('');
+                  },
+                  selectedColor: Colors.redAccent,
+                ),
+                ...List<String>.from(widget.sweetStore['categories'] ?? [])
+                    .map((category) {
+                  return ChoiceChip(
+                    label: Text(category),
+                    selected: selectedCategory == category,
                     onSelected: (selected) {
-                      filterMeals('');
+                      filterMeals(category);
                     },
                     selectedColor: Colors.redAccent,
-                  ),
-                  SizedBox(width: 10), // المسافة بين العناصر
-                  ...List<String>.from(widget.restaurant['categories'] ?? [])
-                      .map((category) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ChoiceChip(
-                        label: Text(category),
-                        selected: selectedCategory == category,
-                        onSelected: (selected) {
-                          filterMeals(category);
-                        },
-                        selectedColor: Colors.redAccent,
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
+                  );
+                }).toList(),
+              ],
             ),
 
-            SizedBox(height: 16),
-
-            // Meals
-            Text(
-              'المنتجات:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            // Items Header
+            const Text(
+              'الأصناف المتاحة:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
+
+            // Items List
             GridView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
                 childAspectRatio: 0.7,
               ),
-              itemCount: meals.length,
+              itemCount: items.length,
               itemBuilder: (context, index) {
-                final meal = meals[index];
+                final item = items[index];
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MealDetailsScreen(
-                          meal: meal,
-                          restaurant: widget.restaurant,
+                        builder: (context) => SweetItemDetails(
+                          sweetStore: widget.sweetStore,
+                          sweetItem: item,
                         ),
                       ),
                     );
@@ -264,42 +232,44 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Meal Image
+                        // Item Image
                         ClipRRect(
-                          borderRadius: BorderRadius.vertical(
+                          borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(8),
                           ),
                           child: Image.network(
-                            meal.imageUrl,
+                            item.imageUrl,
                             height: 100,
                             width: double.infinity,
                             fit: BoxFit.contain,
                           ),
                         ),
                         Padding(
-                          padding: EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Meal Name
+                              // Item Name
                               Text(
-                                meal.name,
-                                style: TextStyle(
+                                item.name,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
 
-                              // Meal Description
-                              Text(meal.description,
-                                  style: TextStyle(fontSize: 14)),
-                              SizedBox(height: 4),
-
-                              // Meal Price
+                              // Item Description
                               Text(
-                                'السعر: ${meal.price}',
-                                style: TextStyle(fontSize: 14),
+                                item.description,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              const SizedBox(height: 4),
+
+                              // Item Price
+                              Text(
+                                'السعر: ${item.price}',
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ],
                           ),

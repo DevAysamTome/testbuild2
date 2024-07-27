@@ -7,10 +7,39 @@ import 'order.dart' as od;
 
 class CartProvider extends ChangeNotifier {
   List<od.Order> _orders = [];
+  Map<String, String> _storeNames = {}; // New map to hold store names
 
   List<od.Order> get orders => _orders;
   int get cartItemCount =>
       _orders.fold(0, (sum, order) => sum + order.items.length);
+  Future<void> fetchStoreName(String storeId) async {
+    try {
+      final collections = [
+        'restaurants',
+        'pharmacies',
+        'beverageStores',
+        'sweetStore',
+      ];
+
+      for (var collection in collections) {
+        final storeDoc = await FirebaseFirestore.instance
+            .collection(collection)
+            .doc(storeId)
+            .get();
+        if (storeDoc.exists) {
+          _storeNames[storeId] = storeDoc['name']; // Store the store name
+          notifyListeners();
+          return; // Exit after finding the store
+        }
+      }
+    } catch (e) {
+      print('Error fetching store name: $e');
+    }
+  }
+
+  String getStoreName(String storeId) {
+    return _storeNames[storeId] ?? 'اسم المتجر غير معروف';
+  }
 
   void addItem(CartItem item) {
     bool isExistingOrder = false;
